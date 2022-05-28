@@ -5,17 +5,16 @@ import os.path
 from bs4 import BeautifulSoup
 import re
 
-
 class Covert2LinkDoc:
     def __init__(self,fold_name, fileName, export_path = 'export'):
 
         true_path = f"{fold_name}/{fileName}"
-        if not os.path.isfile(true_path):
-            print(true_path,'为文件夹，不处理')
+        if not os.path.isfile(true_path) or true_path.find("htm") == -1:
+            print(true_path,'为文件夹，不处理,或者非html文件')
             return
 
         self.exclude_name = set(
-            {'Procedure Specification Principles', 'Description','Definitions and Abbreviations', 'Abbreviations', 'Definitions',
+            {'Procedure Specification Principles','Scope','Void','References','Description','Definitions and Abbreviations', 'Abbreviations', 'Definitions',
              'Successful', 'Conditions', 'General', 'Unsuccessful', 'Abnormal Conditions', 'Operation',
              'Successful Operation', 'Unsuccessful Operation', 'Abnormal'})
         self.dict_for_index_title = dict()
@@ -161,7 +160,7 @@ class Covert2LinkDoc:
     #替换表格里面的序号
     def replace_table_index(self,soup):
         print("替换表格里面的序号...")
-        soup = BeautifulSoup(soup.__str__(), "html.parser")
+        # soup = BeautifulSoup(soup.__str__(), "html.parser")
         tables = soup.find_all('table')
         pattern2 = re.compile(r"(\d\.)+\d*$")
         for t in tables:
@@ -179,7 +178,15 @@ class Covert2LinkDoc:
                     sp.append(BeautifulSoup(f'<a href="#{id}">{text}</a>', "html.parser"))
 
     def set_html_style(self,soup):
-      soup.html['style'] = 'margin-left: 10%;margin-right: 10%;'
+        soup.html['style'] = 'margin-left: 10%;margin-right: 10%;'
+        style = soup.new_tag('style')
+        style['type'] = 'text/css'
+        style.append('a:link, span.MsoHyperlink {color: #000000;text-decoration: none;}'
+                     'a:visited {color: #000000; text-decoration: none;}'
+                     'a:hover {color: #000000; text-decoration: underline;}')
+        soup.head.append(style)
+        # soup.html.append(style)
+
 
     def handler_word_img(self,soup):
         # 处理图片
@@ -206,7 +213,7 @@ class Covert2LinkDoc:
         return data
 
 
-fold_name = 'html'
+fold_name = r'./html'
 
 for fileName in os.listdir(fold_name):
     Covert2LinkDoc(fold_name ,fileName)
